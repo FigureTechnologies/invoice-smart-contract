@@ -181,7 +181,7 @@ mod tests {
         let invalid_add_msg = AddInvoice {
             id: "fake-id".to_string(),
             amount: Uint128::new(0),
-            description: Option::None,
+            description: Option::Some("".to_string()),
         };
 
         let validate_response = invalid_add_msg.validate();
@@ -190,10 +190,10 @@ mod tests {
             Ok(..) => panic!("expected error but was ok"),
             Err(error) => match error {
                 ContractError::InvalidFields { fields } => {
-                    assert_eq!(2, fields.len());
+                    assert_eq!(3, fields.len());
                     assert!(fields.contains(&"id".into()));
                     assert!(fields.contains(&"amount".into()));
-                    // TODO - validate description
+                    assert!(fields.contains(&"description".into()));
                 }
                 error => panic!("unexpected error: {:?}", error),
             },

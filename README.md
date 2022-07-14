@@ -253,7 +253,7 @@ provenanced tx wasm store invoice.wasm \
 Instantiate the contract using the `code_id` returned from storing the Wasm. Note the contract address returned.
 
 ```bash
-provenanced tx wasm instantiate 6 \
+provenanced tx wasm instantiate 1 \
   '{"denom":"usdx.c","recipient":"tp1cxjkp6sxregvhqfqc74ythsha6g00dnry9ef6m","business_name":"Shoe Co, LLC"}' \
   --label invoice1 \
   --admin $(provenanced keys show -a merchant --home build/node0 --keyring-backend test --testnet) \
@@ -381,11 +381,24 @@ The payment was sent to the recipient address. You can confirm this by querying 
 ```bash
 provenanced q bank balances $(provenanced keys show -a recipient --home build/node0 --keyring-backend test --testnet) \
     --testnet -o json | jq
+
+{
+  "balances": [
+    {
+      "denom": "usdx.c",
+      "amount": "10000"
+    }
+  ],
+  "pagination": {
+    "next_key": null,
+    "total": "0"
+  }
+}
 ```
 
 ### Cancel
 
-If `merchant` cancel an invoice that is left unpaid to remove it from state.
+`merchant` can cancel an invoice that is left unpaid to remove it from smart contract state.
 
 ```bash
 provenanced tx wasm execute tp153r9tg33had5c5s54sqzn879xww2q2egektyqnpj6nwxt8wls70qrv2qq2 \
@@ -405,4 +418,34 @@ provenanced query wasm contract-state smart tp153r9tg33had5c5s54sqzn879xww2q2ege
     '{"get_invoice":{"id":"63069195-bc51-41bd-80d7-0ab84b98e283"}}' --testnet -o json | jq
     
 Error: rpc error: code = InvalidArgument desc = invoice::state::Invoice not found: query wasm contract failed: invalid request
+```
+
+### Query Contract Info
+
+```bash
+provenanced query wasm contract-state smart tp153r9tg33had5c5s54sqzn879xww2q2egektyqnpj6nwxt8wls70qrv2qq2 \
+    '{"get_contract_info":{}}' --testnet -o json | jq
+
+{
+  "data": {
+    "admin": "tp1m4arun5y9jcwkatq2ey9wuftanm5ptzsg4ppfs",
+    "recipient": "tp1cxjkp6sxregvhqfqc74ythsha6g00dnry9ef6m",
+    "denom": "usdx.c",
+    "business_name": "Shoe Co, LLC"
+  }
+}
+```
+
+### Query Version Info
+
+```bash
+provenanced query wasm contract-state smart tp153r9tg33had5c5s54sqzn879xww2q2egektyqnpj6nwxt8wls70qrv2qq2 \
+    '{"get_version_info":{}}' --testnet -o json | jq
+    
+{
+  "data": {
+    "contract": "invoice",
+    "version": "0.1.0"
+  }
+}
 ```

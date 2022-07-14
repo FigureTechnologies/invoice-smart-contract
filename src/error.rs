@@ -21,12 +21,11 @@ pub enum ContractError {
     #[error("Unauthorized: {error:?}")]
     Unauthorized { error: String },
 
-    #[error("Unsupported upgrade: {source_version:?} => {target_version:?}")]
-    UnsupportedUpgrade {
-        source_version: String,
-        target_version: String,
-    },
-
+    // #[error("Unsupported upgrade: {source_version:?} => {target_version:?}")]
+    // UnsupportedUpgrade {
+    //     source_version: String,
+    //     target_version: String,
+    // },
     #[error("Only unrestricted markers are supported")]
     UnsupportedMarkerType,
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
