@@ -1,6 +1,6 @@
 # Invoice Smart Contact
 
-This contract facilitates the transfer of restricted coin between addresses.
+This contract is used for the storage of USDX invoice records (IOUs, Bills) and payments.
 
 ## Status
 
