@@ -188,9 +188,9 @@ enum Action {
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Action::Add => write!(f, "add"),
-            Action::Cancel => write!(f, "cancel"),
-            Action::Pay => write!(f, "pay"),
+            Action::Add => write!(f, "add_invoice"),
+            Action::Cancel => write!(f, "cancel_invoice"),
+            Action::Pay => write!(f, "pay_invoice"),
         }
     }
 }
@@ -199,7 +199,7 @@ impl fmt::Display for Action {
 mod tests {
     use crate::state::{config, State};
     use cosmwasm_std::testing::{mock_env, mock_info};
-    use cosmwasm_std::{coin, Addr, StdError, Storage};
+    use cosmwasm_std::{coin, Addr, CosmosMsg, StdError, Storage};
     use provwasm_mocks::mock_dependencies;
 
     use crate::state::get_invoice_storage_read;
@@ -686,7 +686,13 @@ mod tests {
                 assert_eq!(response.attributes[5], attr("recipient", RECIPIENT));
 
                 assert_eq!(response.messages.len(), 1);
-                // TODO - add assertion for BankMsg::Send message
+                assert_eq!(
+                    response.messages[0].msg,
+                    CosmosMsg::Bank(BankMsg::Send {
+                        to_address: RECIPIENT.to_string(),
+                        amount: coins(amount.u128(), TEST_DENOM),
+                    })
+                );
             }
             Err(error) => {
                 panic!("failed to create add invoice: {:?}", error)
@@ -772,10 +778,30 @@ mod tests {
             id: INVOICE_ID.into(),
         };
 
-        let sender_info = mock_info("payer", &[coin(10, TEST_DENOM)]);
+        // mismatch sender on coin amount
+        let mut sender_info = mock_info("payer", &[coin(10, TEST_DENOM)]);
 
         // execute pay invoice
-        let pay_response = execute(
+        let mut pay_response = execute(
+            deps.as_mut(),
+            mock_env(),
+            sender_info.clone(),
+            pay_msg.clone(),
+        );
+
+        // verify invoice response
+        match pay_response {
+            Ok(..) => panic!("expected error, but ok"),
+            Err(error) => match error {
+                ContractError::SentFundsInvoiceMismatch => {}
+                error => panic!("unexpected error: {:?}", error),
+            },
+        }
+
+        // mismatch sender on coin denom
+        sender_info = mock_info("payer", &[coin(5, "wrongdenom")]);
+
+        pay_response = execute(
             deps.as_mut(),
             mock_env(),
             sender_info.clone(),
